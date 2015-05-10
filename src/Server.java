@@ -8,32 +8,66 @@ import java.net.*;
  * UDP Server
  */
 public class Server {
-    public static void main(String[] args) {
+    private static String filename="";
+
+    public static void main(String[] args) throws SocketException, UnknownHostException {
+        filename = messageFileName();
+        retFile(filename);
+    }
+
+    public static void retFile(String filename) {
         try {
-            byte[] data = new byte[1000];
             DatagramSocket s = new DatagramSocket();
             InetAddress addr = InetAddress.getLocalHost();
-/*файл с именем toxic.mp3 должен лежать в корне проекта*/
-            FileInputStream fr = new FileInputStream(new File("test.txt"));
+            byte[] data = new byte[1000];
+            FileInputStream fr = new FileInputStream(new File(filename));
             DatagramPacket pac;
             while (fr.read(data) != -1) {
-//создание пакета данных
+                //создание пакета данных
                 pac = new DatagramPacket(data, data.length, addr, 8033);
                 s.send(pac);//отправление пакета
+                System.out.println("Файл отправлен");
             }
             fr.close();
-            System.out.println("Файл отправлен");
-        } catch (UnknownHostException e) {
-// неверный адрес получателя
-            e.printStackTrace();
-        } catch (SocketException e) {
-// возникли ошибки при передаче данных
-            e.printStackTrace();
         } catch (FileNotFoundException e) {
-// не найден отправляемый файл
+            retFileNameReservServ("test2.txt");
+        }catch(IOException e){e.printStackTrace();}
+    }
+    public static String messageFileName(){
+        try {
+            DatagramSocket s = new DatagramSocket(8033);
+            InetAddress addr = InetAddress.getLocalHost();
+            byte[] data = new byte[100];
+            System.out.println("Ожидаю имя файла");
+            while (true){
+                DatagramPacket pack = new DatagramPacket(data,data.length,addr, 8033);
+                s.receive(pack);
+                System.out.println(new String(pack.getData()));
+                filename = new String(pack.getData());
+                System.out.println("Имя файла получено");
+                    s.close();
+                    break;
+                                 }
+
+            } catch (IOException e) {
             e.printStackTrace();
+                                    }
+        String r = filename.replaceAll("\u0000","");
+        if(!filename.equals(""))
+        return r;
+        else return "test.txt";
+    }
+    public static void retFileNameReservServ(String file) {
+        byte[] data = file.getBytes();
+        try {
+            DatagramSocket s = new DatagramSocket();
+            InetAddress addr = InetAddress.getLocalHost();
+            DatagramPacket pack = new DatagramPacket(data, data.length, addr, 8034);
+            s.send(pack);
+            s.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("Жди ответ от резервного сервера ибо у меня нет этого файла,а я спать...");
     }
 }
